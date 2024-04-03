@@ -49,3 +49,62 @@ Ratio features were also created based on the keystroke data. This captures how 
 ### Data Cleaning
 
 In the actual code pipeline not much data cleaning was employed, however based on our observations, there are key data cleaning steps that could have been taken. Namely this involves discarding events that strongly precede the first input, correcting up and down times to ensure gap times and action times are not too large, and fixing Unicode errors.
+
+## Feature Engineering
+
+For feature engineering, we use the keyboard activity data. The features (especially the custom built features) should aim to directly address the target feature of how the evaluator will score the essays.
+
+- **Aggregations**: The aggregations included are quantiles, nunique, mean, standard deviation, skew, kurtosis, min/max, and sum. These aggregations seriously add to the number of features and are also applied to the time gap features. The total number of features reach 396 in our training dataset.
+- **Time features**: Time features help capture the temporal nature and resolutions of the dataset. The gaps included are 1, 2, 3, 4, 10, 20, 50, and 100 event steps. The smaller gaps help capture immediate sequential dependencies while larger gaps help capture longer term patterns.
+- **Counts**: Important counts include activity, event, and text change counts.
+
+## Modelling
+
+In terms of modelling, we tested three models, LightGBM, CatBoost, and SVM. Our fourth model is an ensemble of these three models.
+
+- **LightGBM (Gradient Boosting)**: LightGBM is a gradient boosting framework that uses tree-based learning algorithms. It is known for its efficiency and speed, making it suitable for large datasets.
+- **CatBoost (Categorical Boosting)**: CatBoost is another gradient boosting algorithm designed to handle categorical features efficiently. It is robust against overfitting and requires minimal hyperparameter tuning.
+- **SVM (Support Vector Machines)**: Support Vector Machines are a class of supervised learning algorithms that can be used for regression tasks.
+
+These models were chosen for their effectiveness in handling both numerical and categorical features, which are prevalent in keystroke and mouse movement data. We evaluate their performance using the root mean square error (RMSE), which aligns with the competition's evaluation metric.
+
+The hyperparameters used for each of these models are summarized in the table below:
+
+| Model | Hyperparameter | Value |
+|-------|---------------|-------|
+| LightGBM | num_leaves | 22 |
+| | learning_rate | 0.0386 |
+| | reg_alpha | 0.00768 |
+| | reg_lambda | 0.342 |
+| | colsample_bytree | 0.627 |
+| | subsample | 0.855 |
+| CatBoost | n_estimators | 12001 |
+| | learning_rate | 0.03 |
+| SVM | C | 1.0 |
+| | kernel | 'rbf' |
+
+Additionally, we ensemble (combining predictions from various models) these models to obtain a better result. We further tune the weights of the three models and selected the best one as our last parameters. We found the best blending weights to bet 0.459 for LGBM, 0.246 for CatBoost, and 0.295 for SVM.
+
+## Experiments
+
+In our experimental setup, we conducted individual tests for each of the three models: LightGBM, CatBoost, and SVM. Additionally, we performed an ensemble experiment combining these models. The experiments were designed to evaluate the models' performance in predicting essay scores based on the features extracted from keystroke and mouse movement data.
+
+### Individual Model Experiments
+
+For each model, we tuned hyperparameters as detailed in the Models section and trained them on a designated training set. We then validated their performance on a separate validation set.
+
+### Ensemble Experiment
+
+After individual testing, we combined the three models into an ensemble. The ensemble method aimed to leverage the strengths of each model to improve overall prediction accuracy. The final predictions were a weighted average of predictions from each model, with weights tuned to minimize the validation RMSE.
+
+### Results
+
+The results of our experiments are summarized in Figure below. The ensemble model demonstrated a notable improvement over individual models, indicating the effectiveness of combining different machine learning approaches for this task.
+
+![Comparison of RMSE for individual models and the ensemble model.](1.png)
+
+Since the leaderboard scores are fundamentally different from actual scores that will be on the private dataset, it is important to trust your own cross validation instead of fully rely on the leaderboard ranking. Our team ended up having a final RMSE of 0.56886 on the final leaderboard, which is 126 places higher than the initial leaderboard score with an RMSE of 0.570.
+
+## Discussion
+
+To further improve our results, it has been shown aligning context features using the reconstructed essays generated using a pre-trained Deberta-based regressor shows promising results. Deberta here essentially works to create a new feature that adds more relevant context to the feature set. Although GPU intensive, BERT and even LLaMA can be explored here. This general theme of introducing external data seems to work quite effectively. This external data can be anonymized, have a vectorizer (such as Tf-idf applied), and then essay related features can be merged together with the competition data reconstructed essays. Choosing the optimal feature set and performing dimensionality reduction with SVD, PCA, or perhaps in a more advanced way with regression feature importances also seem to be effective. This has been a fruitful project, shedding light on the depths that could be taken by the Kaggle community to create relevant features collaboratively and showcasing the power of data science in creating automated grading scheme tools and discovering just how observing something as general as keystrokes can powerfully predict writing quality.
