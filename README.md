@@ -101,7 +101,8 @@ After individual testing, we combined the three models into an ensemble. The ens
 
 The results of our experiments are summarized in Figure below. The ensemble model demonstrated a notable improvement over individual models, indicating the effectiveness of combining different machine learning approaches for this task.
 
-![Comparison of RMSE for individual models and the ensemble model.](1.png)
+<img width="590" alt="1" src="https://github.com/mtaruno/predict-writing-quality-from-how-you-type/assets/44710581/8ac39636-3cad-438d-bcd6-afd6b1a6e68b">
+
 
 Since the leaderboard scores are fundamentally different from actual scores that will be on the private dataset, it is important to trust your own cross validation instead of fully rely on the leaderboard ranking. Our team ended up having a final RMSE of 0.56886 on the final leaderboard, which is 126 places higher than the initial leaderboard score with an RMSE of 0.570.
 
